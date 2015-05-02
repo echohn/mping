@@ -1,63 +1,98 @@
 #!/usr/bin/env ruby
+
 require 'win32ole'
-require 'pp'
-args = ARGV
 
-def command(ip,args)
-  cmd = WIN32OLE.new("Wscript.Shell")
-  cmd.run "ping -t #{args.join(' ')} #{ip}"
+class String
+  def is_a_ip?
+    IP.is_a_ip? self
+  end
+
+  def is_a_ip_range?
+    IpRange.is_a_ip_range? self
+  end
 end
 
-def get_ip(args)
-  ips = []
-  reg_ip = /\d+\.\d+\.\d+\.\d+/
-  reg_ip_range = /(\d+-*\d+|\d+)\.(\d+-*\d+|\d+)\.(\d+-*\d+|\d+)\.(\d+-*\d+|\d+)/
-  reg_ip_few = /{*[\d+,*]+}*\.{*[\d+,*]+}*\.{*[\d+,*]+}*\.{*[\d+,*]+}*/
-
-  args.each do |arg|
-    ips << arg if arg =~ reg_ip
-    ips << arg if arg =~ reg_ip_range
-    ips << arg if arg =~ reg_ip_few
+class IP
+  def self.is_a_ip?(string)
+    !!( string =~ /^\d+\.\d+\.\d+\.\d+$/ && string.split('.').map(&:to_i).select{|x|x < 256 && x >= 0}.size == 4 )
   end
-
-  args.delete_if do |arg|
-    arg =~ reg_ip || arg =~ reg_ip_range || arg =~ reg_ip_few
-  end
-
-  ips = parse_ip(ips.uniq)
-  while ips.select{|ip| ip =~ /^\d+\.\d+\.\d+\.\d+$/}.size < ips.size
-    ips = parse_ip(ips.uniq)
-  end
-  [ips.uniq,args]
 end
 
-def parse_ip(ips)
-  ip_arr = []
-  ips.each do |ip|
-    if ip =~ /^\d+\.\d+\.\d+\.\d+$/
-      ip_arr << ip
-    else
-      ip_fs = ip.split('.')
-      ip_fs.each do |ip_f|
-        case ip_f
-        when /(\d+)-(\d+)/
-          ($1..$2).each do |x|
-            ip_arr << ip.sub(/(\d+)-(\d+)/,x)
-          end
-        when /{([\d+,*]+)}/
-          xx = $1.split(',')
-          xx.each do |x|
-            ip_arr << ip.gsub(/{([\d+,*]+)}/,x)
-          end
+class IpRange
+
+  class << self
+
+    def is_a_ip_range?(string)
+      @fields = string.split('.')
+      !!( length_right? && content_right? )
+    end
+
+    private
+    def length_right?
+      !!( @fields.size == 4 )
+    end
+
+    def content_right?
+      right_count = @fields.select do |x|
+        /^\d+$/.match(x) || /^\d+-\d+$/.match(x) || /^\{[\d+,*]+\}$/.match(x)
+      end.size
+      !!( right_count == 4 )
+    end
+
+  end
+
+  attr_reader :ip_list
+
+  def initialize(string)
+    @ip_list = []
+    @ip_range = string
+    insert_ip_list @ip_range
+    until @ip_list.select(&:is_a_ip?).size == @ip_list.size
+      old_list = @ip_list.dup
+      @ip_list = []
+      old_list.each do |ip_range|
+        insert_ip_list ip_range
+      end
+    end
+  end
+
+  private
+  def insert_ip_list(ip_range)
+    fields = ip_range.split('.')
+    fields.each do |f|
+      case f
+      when  /^(\d+)-(\d+)$/
+        ($1..$2).each do |num|
+          ip = ip_range.sub(f,num)
+          @ip_list << ip unless @ip_list.include? ip
+        end
+      when /^\{([\d+,*]+)\}$/
+        $1.split(',').each do |num|
+          ip = ip_range.sub(f,num)
+          @ip_list << ip unless @ip_list.include? ip
         end
       end
     end
   end
-  ip_arr
 end
 
-ips,args = get_ip(args)
-
-ips.each do |ip|
-  command(ip,args)
+def ping(ip,args)
+  cmd = WIN32OLE.new("Wscript.Shell")
+  cmd.run "ping -t #{args.join(' ')} #{ip}"
 end
+
+args = ARGV
+
+ip_args = args.select{|x| x.is_a_ip? or x.is_a_ip_range? }
+args = args - ip_args
+ip_list ||= []
+ip_args.each do |ip_arg|
+  ip_list << IpRange.new(ip_arg).ip_list
+end
+
+ip_list.flatten.each do |ip|
+  ping(ip,args)
+end
+
+
+
