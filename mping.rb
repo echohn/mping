@@ -58,6 +58,10 @@ class IpRange
 
   private
   def insert_ip_list(ip_range)
+    if ip_range.is_a_ip?
+      @ip_list << ip_range
+      return nil
+    end
     fields = ip_range.split('.')
     fields.each do |f|
       case f
@@ -78,7 +82,8 @@ end
 
 def ping(ip,args)
   cmd = WIN32OLE.new("Wscript.Shell")
-  cmd.run "ping -t #{args.join(' ')} #{ip}"
+  command =  "ping -t #{args.join(' ')} #{ip}"
+  cmd.run command
 end
 
 args = ARGV
