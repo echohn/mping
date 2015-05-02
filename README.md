@@ -4,7 +4,7 @@ Open some window and ping the specified ip address at the same time .
 
 I wrote this tool for a friend . He is a network engineer . He often opens a command windows and input ping the ip address one by one in seconds. This tool could simplify this process with a simple syntax.
 
-!()[./readme.png]
+!()[readme.png]
 
 ## Usage
 
@@ -47,7 +47,3 @@ ocra mping.rb
 ```
 
 It will build a new mping.exe in the directory.
-
-
-
->>>>>>> add Readme.
