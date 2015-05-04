@@ -1,7 +1,7 @@
 #!/usr/bin/env ruby
 
 require 'test/unit'
-require './mping'
+require './lib/mping'
 
 class TestStringNewMethod < Test::Unit::TestCase
 

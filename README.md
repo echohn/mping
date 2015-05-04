@@ -6,6 +6,14 @@ I wrote this tool for a friend . He is a network engineer . He often opens a com
 
 ![](readme.png)
 
+## NEWER
+
+Support OS X .
+
+```bash
+sudo ln -s $PWD/mping_osx.rb /usr/bin/mping
+```
+
 ## Usage
 
 For example,
@@ -40,10 +48,10 @@ I have a  windows 8 x86_64 computer . I built the mping.exe on it .
 If it cannot run on you computer , you can install ruby environment
  and install the `ocra` gem .
 
-Enter this directory and run
+Enter src directory and run
 
 ```
-ocra mping.rb
+ocra mping_win.rb
 ```
 
 It will build a new mping.exe in the directory.
