@@ -6,8 +6,8 @@ require 'lib/mping'
 
 def ping(ip,args)
   command =  "ping #{args.join(' ')} #{ip}"
-  cmd = <<-EOF.gsub(/^\s+|/,'')
-    osascript -e 'tell application "Terminal"' -e 'do script "#{command}"' -e 'end tell'
+  cmd = <<-EOF.gsub(/^\s+\|/,'')
+    |osascript -e 'tell application "Terminal"' -e 'do script "#{command}"' -e 'end tell'
   EOF
   system cmd
 end
